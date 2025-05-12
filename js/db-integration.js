@@ -644,13 +644,4 @@ window.DatabaseAPI = {
   getStockSnapshotsData,
   getDiscontinuedStockGrouped,
   getFilterOptions
-  getAccountsData,
-  getInvoicesData,
-  getBillsHistoryData,
-  getStockData,
-  getDiscontinuedStockData,
-  getStockValueByCategory,
-  getStockSnapshotsData,
-  getDiscontinuedStockGrouped,
-  getFilterOptions
 };
