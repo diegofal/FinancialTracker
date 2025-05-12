@@ -124,6 +124,148 @@ app.get('/api/connect/xerp', async (req, res) => {
   }
 });
 
+// API endpoints for the dashboard data (placeholders for now)
+// These will be connected to actual database calls once firewall access is granted
+
+// Accounts Receivable endpoints
+app.get('/api/accounts/balances', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return account balances from SPISA database once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/accounts/future-payments', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return future payments data from SPISA database once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/accounts/due-balance', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return due balance data from SPISA database once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+// Invoices endpoints
+app.get('/api/invoices/spisa-billed', (req, res) => {
+  const period = req.query.period || 'month';
+  res.json({ 
+    message: `This endpoint will return SPISA billed amount for period ${period} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/invoices/xerp-billed', (req, res) => {
+  const period = req.query.period || 'month';
+  res.json({ 
+    message: `This endpoint will return XERP billed amount for period ${period} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/invoices/history', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return XERP bills history once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/invoices/bills', (req, res) => {
+  const period = req.query.period || 'month';
+  res.json({ 
+    message: `This endpoint will return XERP bills for period ${period} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/invoices/bill-items/:orderNo', (req, res) => {
+  const orderNo = req.params.orderNo;
+  res.json({ 
+    message: `This endpoint will return XERP bill items for order ${orderNo} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+// Stock endpoints
+app.get('/api/stock/items', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return SPISA stock items once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/stock/value-by-category', (req, res) => {
+  const yearsSoldIn = parseInt(req.query.yearsSoldIn) || 2;
+  res.json({ 
+    message: `This endpoint will return SPISA stock value by category for years sold in ${yearsSoldIn} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/stock/snapshots', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return SPISA stock snapshots once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/stock/discontinued', (req, res) => {
+  const yearsNotSold = parseInt(req.query.yearsNotSold) || 10;
+  res.json({ 
+    message: `This endpoint will return SPISA discontinued stock for years not sold ${yearsNotSold} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/stock/discontinued-grouped', (req, res) => {
+  const yearsNotSold = parseInt(req.query.yearsNotSold) || 10;
+  res.json({ 
+    message: `This endpoint will return SPISA discontinued stock grouped by category for years not sold ${yearsNotSold} once firewall access is granted`,
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+// Filter options endpoints
+app.get('/api/filters/categories', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return stock categories once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/filters/providers', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return stock providers once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
+app.get('/api/filters/countries', (req, res) => {
+  res.json({ 
+    message: 'This endpoint will return stock countries once firewall access is granted',
+    status: 'pending_firewall_access',
+    ip: '34.23.58.208'
+  });
+});
+
 // Root route - serve the HTML file
 app.get('/', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'index.html'));
