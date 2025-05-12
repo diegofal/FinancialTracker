@@ -1,15 +1,53 @@
 const sql = require('mssql');
-const config = require('./dbconfig');
+const dbConfig = require('./dbconfig');
+
+// Pools to manage database connections
+let spisaPool = null;
+let xerpPool = null;
 
 /**
- * Execute a stored procedure with parameters
+ * Get connection pool for SPISA database
+ * @returns {Promise<sql.ConnectionPool>} - SQL connection pool
+ */
+async function getSpisaPool() {
+  if (!spisaPool) {
+    try {
+      spisaPool = await new sql.ConnectionPool(dbConfig.spisa).connect();
+      console.log('Connected to SPISA database');
+    } catch (err) {
+      console.error('Error connecting to SPISA database:', err);
+      throw err;
+    }
+  }
+  return spisaPool;
+}
+
+/**
+ * Get connection pool for XERP database
+ * @returns {Promise<sql.ConnectionPool>} - SQL connection pool
+ */
+async function getXerpPool() {
+  if (!xerpPool) {
+    try {
+      xerpPool = await new sql.ConnectionPool(dbConfig.xerp).connect();
+      console.log('Connected to XERP database');
+    } catch (err) {
+      console.error('Error connecting to XERP database:', err);
+      throw err;
+    }
+  }
+  return xerpPool;
+}
+
+/**
+ * Execute a stored procedure with parameters on SPISA database
  * @param {string} procedureName - Name of the stored procedure to execute
  * @param {Array} params - Array of parameter objects with name, type and value
  * @returns {Promise<any>} - Query results
  */
-async function executeStoredProcedure(procedureName, params = []) {
+async function executeSpisaStoredProcedure(procedureName, params = []) {
   try {
-    let pool = await sql.connect(config);
+    let pool = await getSpisaPool();
     let request = pool.request();
 
     // Add parameters to request
@@ -18,10 +56,37 @@ async function executeStoredProcedure(procedureName, params = []) {
     });
 
     // Execute the stored procedure
+    console.log(`Executing SPISA stored procedure: ${procedureName}`);
     const result = await request.execute(procedureName);
     return result.recordset;
   } catch (error) {
-    console.error(`Error executing stored procedure ${procedureName}:`, error);
+    console.error(`Error executing SPISA stored procedure ${procedureName}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Execute a stored procedure with parameters on XERP database
+ * @param {string} procedureName - Name of the stored procedure to execute
+ * @param {Array} params - Array of parameter objects with name, type and value
+ * @returns {Promise<any>} - Query results
+ */
+async function executeXerpStoredProcedure(procedureName, params = []) {
+  try {
+    let pool = await getXerpPool();
+    let request = pool.request();
+
+    // Add parameters to request
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+
+    // Execute the stored procedure
+    console.log(`Executing XERP stored procedure: ${procedureName}`);
+    const result = await request.execute(procedureName);
+    return result.recordset;
+  } catch (error) {
+    console.error(`Error executing XERP stored procedure ${procedureName}:`, error);
     throw error;
   }
 }
@@ -34,7 +99,7 @@ async function executeStoredProcedure(procedureName, params = []) {
  */
 async function fetchSpisaBalances() {
   // Stored procedure: sp_GetSpisaBalances
-  return executeStoredProcedure('sp_GetSpisaBalances');
+  return executeSpisaStoredProcedure('sp_GetSpisaBalances');
 }
 
 /**
@@ -43,7 +108,7 @@ async function fetchSpisaBalances() {
  */
 async function fetchSpisaFuturePayments() {
   // Stored procedure: sp_GetSpisaFuturePayments
-  return executeStoredProcedure('sp_GetSpisaFuturePayments');
+  return executeSpisaStoredProcedure('sp_GetSpisaFuturePayments');
 }
 
 /**
@@ -52,7 +117,7 @@ async function fetchSpisaFuturePayments() {
  */
 async function fetchSpisaDueBalance() {
   // Stored procedure: sp_GetSpisaDueBalance
-  return executeStoredProcedure('sp_GetSpisaDueBalance');
+  return executeSpisaStoredProcedure('sp_GetSpisaDueBalance');
 }
 
 // *** INVOICES SERVICES ***
@@ -64,7 +129,7 @@ async function fetchSpisaDueBalance() {
  */
 async function fetchSpisaBilled(period) {
   // Stored procedure: sp_GetSpisaBilled
-  return executeStoredProcedure('sp_GetSpisaBilled', [
+  return executeSpisaStoredProcedure('sp_GetSpisaBilled', [
     { name: 'Period', type: sql.VarChar, value: period }
   ]);
 }
@@ -76,7 +141,7 @@ async function fetchSpisaBilled(period) {
  */
 async function fetchXerpBilled(period) {
   // Stored procedure: sp_GetXerpBilled
-  return executeStoredProcedure('sp_GetXerpBilled', [
+  return executeXerpStoredProcedure('sp_GetXerpBilled', [
     { name: 'Period', type: sql.VarChar, value: period }
   ]);
 }
@@ -87,7 +152,7 @@ async function fetchXerpBilled(period) {
  */
 async function fetchXerpBillsHistory() {
   // Stored procedure: sp_GetXerpBillsHistory
-  return executeStoredProcedure('sp_GetXerpBillsHistory');
+  return executeXerpStoredProcedure('sp_GetXerpBillsHistory');
 }
 
 /**
@@ -97,7 +162,7 @@ async function fetchXerpBillsHistory() {
  */
 async function fetchXerpBills(filterPeriod) {
   // Stored procedure: sp_GetXerpBills
-  return executeStoredProcedure('sp_GetXerpBills', [
+  return executeXerpStoredProcedure('sp_GetXerpBills', [
     { name: 'FilterPeriod', type: sql.VarChar, value: filterPeriod }
   ]);
 }
@@ -109,7 +174,7 @@ async function fetchXerpBills(filterPeriod) {
  */
 async function fetchXerpBillItems(orderNo) {
   // Stored procedure: sp_GetXerpBillItems
-  return executeStoredProcedure('sp_GetXerpBillItems', [
+  return executeXerpStoredProcedure('sp_GetXerpBillItems', [
     { name: 'OrderNo', type: sql.VarChar, value: orderNo }
   ]);
 }
@@ -123,7 +188,7 @@ async function fetchXerpBillItems(orderNo) {
  */
 async function fetchSpisaStock(filters) {
   // Stored procedure: sp_GetSpisaStock
-  return executeStoredProcedure('sp_GetSpisaStock', [
+  return executeSpisaStoredProcedure('sp_GetSpisaStock', [
     { name: 'YearsSoldIn', type: sql.Int, value: filters.yearsSoldIn || 2 },
     { name: 'NeedsRestock', type: sql.Bit, value: filters.needsRestock || 0 },
     { name: 'CategoryIds', type: sql.VarChar, value: (filters.categoryIds || []).join(',') },
@@ -139,7 +204,7 @@ async function fetchSpisaStock(filters) {
  */
 async function fetchSpisaStockValueByCategory(yearsSoldIn) {
   // Stored procedure: sp_GetSpisaStockValueByCategory
-  return executeStoredProcedure('sp_GetSpisaStockValueByCategory', [
+  return executeSpisaStoredProcedure('sp_GetSpisaStockValueByCategory', [
     { name: 'YearsSoldIn', type: sql.Int, value: yearsSoldIn || 2 }
   ]);
 }
@@ -150,7 +215,7 @@ async function fetchSpisaStockValueByCategory(yearsSoldIn) {
  */
 async function fetchSpisaStockSnapshots() {
   // Stored procedure: sp_GetSpisaStockSnapshots
-  return executeStoredProcedure('sp_GetSpisaStockSnapshots');
+  return executeSpisaStoredProcedure('sp_GetSpisaStockSnapshots');
 }
 
 /**
@@ -160,7 +225,7 @@ async function fetchSpisaStockSnapshots() {
  */
 async function fetchSpisaStockDiscontinued(yearsNotSold) {
   // Stored procedure: sp_GetSpisaStockDiscontinued
-  return executeStoredProcedure('sp_GetSpisaStockDiscontinued', [
+  return executeSpisaStoredProcedure('sp_GetSpisaStockDiscontinued', [
     { name: 'YearsNotSold', type: sql.Int, value: yearsNotSold || 10 }
   ]);
 }
@@ -172,7 +237,7 @@ async function fetchSpisaStockDiscontinued(yearsNotSold) {
  */
 async function fetchSpisaStockDiscontinuedGrouped(yearsNotSold) {
   // Stored procedure: sp_GetSpisaStockDiscontinuedGrouped
-  return executeStoredProcedure('sp_GetSpisaStockDiscontinuedGrouped', [
+  return executeSpisaStoredProcedure('sp_GetSpisaStockDiscontinuedGrouped', [
     { name: 'YearsNotSold', type: sql.Int, value: yearsNotSold || 10 }
   ]);
 }
@@ -185,7 +250,7 @@ async function fetchSpisaStockDiscontinuedGrouped(yearsNotSold) {
  */
 async function fetchStockCategories() {
   // Stored procedure: sp_GetStockCategories
-  return executeStoredProcedure('sp_GetStockCategories');
+  return executeSpisaStoredProcedure('sp_GetStockCategories');
 }
 
 /**
@@ -194,7 +259,7 @@ async function fetchStockCategories() {
  */
 async function fetchStockProviders() {
   // Stored procedure: sp_GetStockProviders
-  return executeStoredProcedure('sp_GetStockProviders');
+  return executeSpisaStoredProcedure('sp_GetStockProviders');
 }
 
 /**
@@ -203,7 +268,7 @@ async function fetchStockProviders() {
  */
 async function fetchStockCountries() {
   // Stored procedure: sp_GetStockCountries
-  return executeStoredProcedure('sp_GetStockCountries');
+  return executeSpisaStoredProcedure('sp_GetStockCountries');
 }
 
 module.exports = {
