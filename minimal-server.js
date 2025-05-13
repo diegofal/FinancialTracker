@@ -580,20 +580,21 @@ app.get('/api/stock/discontinued', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Query to get discontinued stock (using direct SQL instead of stored procedure)
+    // Query to get discontinued stock (items with no recent sales)
     const result = await pool.request()
-      .input('yearsNotSold', sql.Int, yearsNotSold)
       .query(`
-        SELECT 
-          code,
-          description,
-          stock,
-          category,
-          CONVERT(VARCHAR(10), lastSale, 103) AS lastSale,
-          CONCAT('$', FORMAT(value, '#,0.00')) AS value
-        FROM Stock
-        WHERE DATEDIFF(YEAR, lastSale, GETDATE()) >= @yearsNotSold
-        ORDER BY value DESC
+        SELECT TOP 50
+          A.Codigo as code,
+          A.Descripcion as description,
+          A.Stock as stock,
+          ISNULL(C.Nombre, 'Sin Categoría') as category,
+          CONVERT(VARCHAR(10), A.FechaUltimoPrecio, 103) AS lastSale,
+          CONCAT('$', FORMAT(A.Stock * A.Precio, '#,0.00')) AS value
+        FROM Articulos A
+        LEFT JOIN Categorias C ON A.Categoria_Id = C.Id
+        WHERE ISNULL(A.UltimasVentas, 0) = 0
+          AND A.Stock > 0
+        ORDER BY A.Stock * A.Precio DESC
       `);
     
     res.json(result.recordset);
@@ -615,16 +616,17 @@ app.get('/api/stock/discontinued-grouped', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Query to get discontinued stock grouped by category (using direct SQL instead of stored procedure)
+    // Query to get discontinued stock grouped by category
     const result = await pool.request()
-      .input('yearsNotSold', sql.Int, yearsNotSold)
       .query(`
         SELECT 
-          category,
-          SUM(value) AS stock_value
-        FROM Stock
-        WHERE DATEDIFF(YEAR, lastSale, GETDATE()) >= @yearsNotSold
-        GROUP BY category
+          ISNULL(C.Nombre, 'Sin Categoría') as category,
+          SUM(A.Stock * A.Precio) AS stock_value
+        FROM Articulos A
+        LEFT JOIN Categorias C ON A.Categoria_Id = C.Id
+        WHERE ISNULL(A.UltimasVentas, 0) = 0
+          AND A.Stock > 0
+        GROUP BY C.Nombre
         ORDER BY stock_value DESC
       `);
     
@@ -647,18 +649,15 @@ app.get('/api/filters/categories', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Query to get distinct categories
+    // Query to get categories from Categorias table
     const result = await pool.request()
       .query(`
         SELECT 
-          CAST(ROW_NUMBER() OVER (ORDER BY category) AS VARCHAR) AS id, 
-          category AS name
-        FROM (
-          SELECT DISTINCT category
-          FROM Stock
-          WHERE category IS NOT NULL AND category != ''
-        ) AS distinct_categories
-        ORDER BY name
+          CAST(Id AS VARCHAR) AS id, 
+          Nombre AS name
+        FROM Categorias
+        WHERE Nombre IS NOT NULL AND Nombre != ''
+        ORDER BY Nombre
       `);
     
     res.json(result.recordset);
@@ -679,21 +678,33 @@ app.get('/api/filters/providers', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Query to get distinct providers
+    // Query to get suppliers from Suppliers table
     const result = await pool.request()
       .query(`
         SELECT 
-          CAST(ROW_NUMBER() OVER (ORDER BY provider) AS VARCHAR) AS id, 
-          provider AS name
-        FROM (
-          SELECT DISTINCT provider
-          FROM Stock
-          WHERE provider IS NOT NULL AND provider != ''
-        ) AS distinct_providers
-        ORDER BY name
+          CAST(Id AS VARCHAR) AS id, 
+          Name AS name
+        FROM Suppliers
+        WHERE Name IS NOT NULL AND Name != ''
+        ORDER BY Name
       `);
     
-    res.json(result.recordset);
+    // If no records, try to get distinct providers from Articulos
+    if (result.recordset.length === 0) {
+      const altResult = await pool.request()
+        .query(`
+          SELECT 
+            CAST(Proveedor_Id AS VARCHAR) AS id, 
+            CAST(Proveedor_Id AS VARCHAR) AS name
+          FROM Articulos
+          WHERE Proveedor_Id IS NOT NULL
+          GROUP BY Proveedor_Id
+          ORDER BY Proveedor_Id
+        `);
+      res.json(altResult.recordset);
+    } else {
+      res.json(result.recordset);
+    }
     
     // Close the connection
     pool.close();
