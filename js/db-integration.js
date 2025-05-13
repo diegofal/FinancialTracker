@@ -314,30 +314,61 @@ async function getKpiData() {
     };
   }
   
+  const futurePaymentsData = await fetchData('/api/accounts/future-payments', 'kpi');
+  const dueBalanceData = await fetchData('/api/accounts/due-balance', 'kpi');
+  const spisaBilledData = await fetchData('/api/invoices/spisa-billed?period=month', 'kpi');
+  const xerpBilledData = await fetchData('/api/invoices/xerp-billed?period=month', 'kpi');
+  
+  // Calculated total debt from balances
+  let totalDebt = 0, overdueDebt = 0;
+  if (Array.isArray(totalDebtData)) {
+    totalDebtData.forEach(account => {
+      if (account.balance) {
+        // Remove $ and commas, then parse to float
+        const balance = parseFloat(account.balance.replace('$', '').replace(/,/g, ''));
+        totalDebt += isNaN(balance) ? 0 : balance;
+        
+        if (account.type === 0 && account.due) {
+          const due = parseFloat(account.due.replace('$', '').replace(/,/g, ''));
+          overdueDebt += isNaN(due) ? 0 : due;
+        }
+      }
+    });
+  }
+  
+  // Format currency values
+  const formatter = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2
+  });
+  
   return {
     totalDebt: {
-      value: "$13,354,799.20",
-      secondary: "$4,319,116.10",
-      trend: "down"
+      value: formatter.format(totalDebt),
+      secondary: formatter.format(overdueDebt),
+      trend: "neutral"
     },
     receivables: {
-      value: "$5,895,980.53",
-      secondary: "12.5% vs. Abril",
-      trend: "up"
+      value: futurePaymentsData && futurePaymentsData.PaymentAmount && futurePaymentsData.PaymentAmount.length > 0 
+        ? formatter.format(futurePaymentsData.PaymentAmount[0]) 
+        : "$0.00",
+      secondary: "Proyección a 30 días",
+      trend: "neutral"
     },
     overdueDebt: {
-      value: "$4,662,863.01",
-      secondary: "5.2% este mes",
-      trend: "up"
+      value: formatter.format(overdueDebt),
+      secondary: "Deuda vencida actual",
+      trend: "neutral"
     },
     billedMonth: {
-      value: "$16,018,545.55",
-      secondary: "$2,544,409.84 vs. Abril",
-      trend: "up"
+      value: xerpBilledData && xerpBilledData.BilledMonthly ? formatter.format(xerpBilledData.BilledMonthly) : "$0.00",
+      secondary: spisaBilledData && spisaBilledData.InvoiceAmount ? formatter.format(spisaBilledData.InvoiceAmount) : "$0.00",
+      trend: "neutral"
     },
     billedToday: {
-      value: "$0.00",
-      secondary: "Sin facturación registrada",
+      value: xerpBilledData && xerpBilledData.BilledToday ? formatter.format(xerpBilledData.BilledToday) : "$0.00",
+      secondary: "Facturación del día",
       trend: "neutral"
     }
   };
@@ -503,11 +534,7 @@ async function getDiscontinuedStockGrouped(yearsNotSold = 10) {
     };
   }
   
-  return [
-    { category: "Bridas", stock_value: 500000 },
-    { category: "Accesorios", stock_value: 300000 },
-    { category: "Accesorio Forjado", stock_value: 200000 }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
