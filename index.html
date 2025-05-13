@@ -4,49 +4,77 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Financial & Inventory Dashboard</title>
-  <!-- Primary Font Awesome CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Fallback Font Awesome if primary fails -->
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css" crossorigin="anonymous">
+  <!-- Local Font Awesome -->
+  <link rel="stylesheet" href="/assets/css/all.min.css">
   <!-- Scripts -->
   <script src="/js/api.js"></script>
   <script src="/js/db-integration.js"></script>
   <script src="/js/dashboard-init.js"></script>
-  <!-- Fallback for Font Awesome -->
+  <!-- Fallback for Font Awesome (if local version fails) -->
+  <style>
+    /* Base icon styles */
+    .fa-fallback {
+      display: inline-block;
+      margin-right: 5px;
+    }
+    
+    /* Icon-specific emoji fallbacks */
+    .icon-fallback-chart-line:before { content: "📈"; }
+    .icon-fallback-coins:before { content: "💰"; }
+    .icon-fallback-circle-exclamation:before { content: "❗"; }
+    .icon-fallback-arrow-down:before { content: "↓"; }
+    .icon-fallback-wallet:before { content: "👛"; }
+    .icon-fallback-check-circle:before { content: "✓"; }
+    .icon-fallback-arrow-up:before { content: "↑"; }
+    .icon-fallback-exclamation-circle:before { content: "⚠️"; }
+    .icon-fallback-file-invoice-dollar:before { content: "📄"; }
+    .icon-fallback-box:before { content: "📦"; }
+    .icon-fallback-calendar:before { content: "📅"; }
+    .icon-fallback-archive:before { content: "🗄️"; }
+    .icon-fallback-exclamation-triangle:before { content: "⚠️"; }
+    .icon-fallback-times:before { content: "✖"; }
+  </style>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Check if Font Awesome is loaded
-      const span = document.createElement('span');
-      span.className = 'fa';
-      span.style.display = 'none';
-      document.body.insertBefore(span, document.body.firstChild);
-      
-      const isFontAwesomeLoaded = window.getComputedStyle(span).fontFamily.includes('FontAwesome');
-      document.body.removeChild(span);
-      
-      if (!isFontAwesomeLoaded) {
-        console.log('Font Awesome not loaded, adding fallback icons');
-        // Add embedded icon font as fallback
-        const style = document.createElement('style');
-        style.innerHTML = `
-          .fas.fa-chart-line:before { content: "📈"; }
-          .fas.fa-coins:before { content: "💰"; }
-          .fas.fa-circle-exclamation:before { content: "❗"; }
-          .fas.fa-arrow-down:before { content: "↓"; }
-          .fas.fa-wallet:before { content: "👛"; }
-          .fas.fa-check-circle:before { content: "✓"; }
-          .fas.fa-arrow-up:before { content: "↑"; }
-          .fas.fa-exclamation-circle:before { content: "⚠️"; }
-          .fas.fa-file-invoice-dollar:before { content: "📄"; }
-          .fas.fa-box:before { content: "📦"; }
-          .fas.fa-calendar:before { content: "📅"; }
-          .fas.fa-archive:before { content: "🗄️"; }
-          .fas.fa-exclamation-triangle:before { content: "⚠️"; }
-          .fas.fa-times:before { content: "✖"; }
-        `;
-        document.head.appendChild(style);
-      }
+      setTimeout(function() {
+        const span = document.createElement('span');
+        span.className = 'fa';
+        span.style.display = 'none';
+        document.body.insertBefore(span, document.body.firstChild);
+        
+        const isFontAwesomeLoaded = window.getComputedStyle(span).fontFamily.includes('Font Awesome');
+        document.body.removeChild(span);
+        
+        if (!isFontAwesomeLoaded) {
+          console.log('Font Awesome not loaded, replacing icons with fallbacks');
+          
+          // Replace each icon with its fallback emoji
+          replaceIcon('chart-line');
+          replaceIcon('coins');
+          replaceIcon('circle-exclamation');
+          replaceIcon('arrow-down');
+          replaceIcon('wallet');
+          replaceIcon('check-circle');
+          replaceIcon('arrow-up');
+          replaceIcon('exclamation-circle');
+          replaceIcon('file-invoice-dollar');
+          replaceIcon('box');
+          replaceIcon('calendar');
+          replaceIcon('archive');
+          replaceIcon('exclamation-triangle');
+          replaceIcon('times');
+        }
+      }, 500); // Give Font Awesome a chance to load
     });
+    
+    function replaceIcon(iconName) {
+      const elements = document.querySelectorAll('.fa-' + iconName + ', .fas.fa-' + iconName);
+      elements.forEach(el => {
+        el.classList.add('fa-fallback', 'icon-fallback-' + iconName);
+        el.classList.remove('fa-' + iconName, 'fas');
+      });
+    }
   </script>
   <style>
     /* Global styles */

@@ -9,6 +9,7 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Database configurations
 const spisaConfig = {
