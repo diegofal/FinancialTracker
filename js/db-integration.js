@@ -281,69 +281,19 @@ function addErrorStyles() {
 }
 
 /**
- * Get appropriate placeholder data for an endpoint
+ * Get appropriate error data for an endpoint
+ * This function is used when an API request fails
  * @param {string} endpoint - API endpoint
- * @returns {Object} - Placeholder data for the endpoint
+ * @returns {Object} - Error data for the endpoint
  */
 function getPlaceholderForEndpoint(endpoint) {
-  if (endpoint.includes('/api/accounts/balances')) {
-    return placeholderData.accountsData;
-  } else if (endpoint.includes('/api/accounts/future-payments')) {
-    return { PaymentAmount: [1250000, 950000, 3200000] };
-  } else if (endpoint.includes('/api/accounts/due-balance')) {
-    return { Due: [4662863.01] };
-  } else if (endpoint.includes('/api/invoices/spisa-billed')) {
-    return { InvoiceAmount: 16018545.55 };
-  } else if (endpoint.includes('/api/invoices/xerp-billed')) {
-    return { BilledMonthly: 16018545.55, BilledToday: 0 };
-  } else if (endpoint.includes('/api/invoices/history')) {
-    return [
-      { MonthYear: "2025-01-01", Amount: 12500000 },
-      { MonthYear: "2025-02-01", Amount: 14200000 },
-      { MonthYear: "2025-03-01", Amount: 13600000 },
-      { MonthYear: "2025-04-01", Amount: 15450000 },
-      { MonthYear: "2025-05-01", Amount: 16018545.55 }
-    ];
-  } else if (endpoint.includes('/api/invoices/bills')) {
-    return placeholderData.invoicesData;
-  } else if (endpoint.includes('/api/invoices/bill-items/')) {
-    return [
-      { stk_code: "BS15012", description: "Brida S-150 SORF 1/2", qty_sent: 5 },
-      { stk_code: "TR12X6", description: "Tee de Reducción STD 1/2x3/4", qty_sent: 3 }
-    ];
-  } else if (endpoint.includes('/api/stock/items')) {
-    return placeholderData.stockData;
-  } else if (endpoint.includes('/api/stock/value-by-category')) {
-    return placeholderData.categoryData.map(item => ({ 
-      category: item.category, 
-      stock_value: item.value * 10000 
-    }));
-  } else if (endpoint.includes('/api/stock/snapshots')) {
-    return [
-      { Date: "2025-01-01", StockValue: 4200000 },
-      { Date: "2025-02-01", StockValue: 4350000 },
-      { Date: "2025-03-01", StockValue: 4100000 },
-      { Date: "2025-04-01", StockValue: 4250000 },
-      { Date: "2025-05-01", StockValue: 4450000 }
-    ];
-  } else if (endpoint.includes('/api/stock/discontinued')) {
-    return placeholderData.discontinuedData;
-  } else if (endpoint.includes('/api/stock/discontinued-grouped')) {
-    return [
-      { category: "Bridas", stock_value: 500000 },
-      { category: "Accesorios", stock_value: 300000 },
-      { category: "Accesorio Forjado", stock_value: 200000 }
-    ];
-  } else if (endpoint.includes('/api/filters/categories')) {
-    return placeholderData.filterOptions.categories;
-  } else if (endpoint.includes('/api/filters/providers')) {
-    return placeholderData.filterOptions.providers;
-  } else if (endpoint.includes('/api/filters/countries')) {
-    return placeholderData.filterOptions.countries;
-  }
-  
-  // Default placeholder
-  return { message: "Placeholder data not available for this endpoint" };
+  // Return object with error information
+  return { 
+    error: true, 
+    errorType: 'database_access',
+    message: 'Database connection not available. Add the IP in the banner to your Azure SQL firewall rules.',
+    endpoint: endpoint
+  };
 }
 
 /**
@@ -404,16 +354,7 @@ async function getAccountsData() {
     };
   }
   
-  return [
-    { name: "INDUSTRIAL DAX", balance: "$2,321,899.15", due: "$2,321,899.15", type: 0 },
-    { name: "BRICOD CONTADO", balance: "$2,977,776.20", due: "$2,295,247.96", type: 0 },
-    { name: "INDUSTRIAL CONVER", balance: "$45,618.91", due: "$45,618.91", type: 0 },
-    { name: "CANOGIDER", balance: "$2,292,897.10", due: "$0.00", type: 1 },
-    { name: "FERNANDEZ", balance: "$252,110.03", due: "$0.00", type: 1 },
-    { name: "BREND", balance: "$66,652.41", due: "$0.00", type: 1 },
-    { name: "BRICAVAL", balance: "$488,488.09", due: "$0.00", type: 1 },
-    { name: "CONTIVAL", balance: "$145,222.41", due: "$0.00", type: 1 }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
@@ -432,12 +373,7 @@ async function getInvoicesData(period = 'month') {
     };
   }
   
-  return [
-    { date: "12/05/2025", customer: "Cliente Ejemplo SA", invoice: "FC-A001-00012345", amount: "$121,000.00" },
-    { date: "11/05/2025", customer: "Distribuidora Industrial", invoice: "FC-A001-00012346", amount: "$345,200.00" },
-    { date: "10/05/2025", customer: "Bridas Argentinas", invoice: "FC-A001-00012347", amount: "$188,650.00" },
-    { date: "09/05/2025", customer: "Metalúrgica del Sur", invoice: "FC-A001-00012348", amount: "$475,900.00" }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
@@ -455,13 +391,7 @@ async function getBillsHistoryData() {
     };
   }
   
-  return [
-    { MonthYear: "2025-01-01", Amount: 12500000 },
-    { MonthYear: "2025-02-01", Amount: 14200000 },
-    { MonthYear: "2025-03-01", Amount: 13600000 },
-    { MonthYear: "2025-04-01", Amount: 15450000 },
-    { MonthYear: "2025-05-01", Amount: 16018545.55 }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
@@ -513,11 +443,7 @@ async function getDiscontinuedStockData(yearsNotSold = 10) {
     };
   }
   
-  return [
-    { code: "BS15012", description: "Brida S-150 SORF 1/2", stock: "15", category: "Bridas", lastSale: "10/05/2020", value: "$25,000.00" },
-    { code: "EB7-5/8X4", description: "Espárrago B7 de 5/8 x 4", stock: "50", category: "Accesorios", lastSale: "22/11/2019", value: "$15,000.00" },
-    { code: "TR2X1", description: "Tee de Reducción STD 2x1", stock: "8", category: "Accesorio Forjado", lastSale: "15/02/2021", value: "$12,000.00" }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
