@@ -454,12 +454,7 @@ async function getStockData(filters = {}) {
     };
   }
   
-  return [
-    { code: "TR12X6", description: "Tee de Reducción STD 1/2x3/4", stock: "0", sold: "5", cost: "$7,687.00", date: "30/08/2023", status: "Necesita Reposicion" },
-    { code: "BSS15014", description: "Bridas S-150 SORF de 1/4", stock: "23", sold: "39", cost: "$6,707.04", date: "25/03/2025", status: "Necesita Reposicion" },
-    { code: "BSS3006", description: "Bridas S-300 SORF de 6", stock: "9", sold: "42", cost: "$5,383.19", date: "13/12/2024", status: "Necesita Reposicion" },
-    { code: "ES/BX3/4", description: "Espárragos R7 de 3/4 Cabeza Hexagonal", stock: "29", sold: "2004", cost: "$4,917.75", date: "10/02/2025", status: "Necesita Reposicion" }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
