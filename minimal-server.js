@@ -128,91 +128,261 @@ app.get('/api/connect/xerp', async (req, res) => {
 // These will be connected to actual database calls once firewall access is granted
 
 // Accounts Receivable endpoints
-app.get('/api/accounts/balances', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return account balances from SPISA database once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/accounts/balances', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get balance data
+    const result = await pool.request()
+      .execute('sp_GetBalances');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching balances:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/accounts/future-payments', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return future payments data from SPISA database once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/accounts/future-payments', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get future payments data
+    const result = await pool.request()
+      .execute('sp_GetFuturePayments');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching future payments:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/accounts/due-balance', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return due balance data from SPISA database once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/accounts/due-balance', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get due balance data
+    const result = await pool.request()
+      .execute('sp_GetDueBalance');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching due balance:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
 // Invoices endpoints
-app.get('/api/invoices/spisa-billed', (req, res) => {
+app.get('/api/invoices/spisa-billed', async (req, res) => {
   const period = req.query.period || 'month';
-  res.json({ 
-    message: `This endpoint will return SPISA billed amount for period ${period} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get billed amount data
+    const result = await pool.request()
+      .input('period', sql.VarChar(10), period)
+      .execute('sp_GetBilledAmount');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching SPISA billed amount:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/invoices/xerp-billed', (req, res) => {
+app.get('/api/invoices/xerp-billed', async (req, res) => {
   const period = req.query.period || 'month';
-  res.json({ 
-    message: `This endpoint will return XERP billed amount for period ${period} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to XERP database
+    const pool = await sql.connect(xerpConfig);
+    
+    // Execute stored procedure to get billed amount data
+    const result = await pool.request()
+      .input('period', sql.VarChar(10), period)
+      .execute('sp_GetBilledAmount');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching XERP billed amount:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/invoices/history', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return XERP bills history once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/invoices/history', async (req, res) => {
+  try {
+    // Connect to XERP database
+    const pool = await sql.connect(xerpConfig);
+    
+    // Execute stored procedure to get bills history data
+    const result = await pool.request()
+      .execute('sp_GetBillsHistory');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching bills history:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/invoices/bills', (req, res) => {
+app.get('/api/invoices/bills', async (req, res) => {
   const period = req.query.period || 'month';
-  res.json({ 
-    message: `This endpoint will return XERP bills for period ${period} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to XERP database
+    const pool = await sql.connect(xerpConfig);
+    
+    // Execute stored procedure to get bills data
+    const result = await pool.request()
+      .input('period', sql.VarChar(10), period)
+      .execute('sp_GetBills');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching bills:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/invoices/bill-items/:orderNo', (req, res) => {
+app.get('/api/invoices/bill-items/:orderNo', async (req, res) => {
   const orderNo = req.params.orderNo;
-  res.json({ 
-    message: `This endpoint will return XERP bill items for order ${orderNo} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to XERP database
+    const pool = await sql.connect(xerpConfig);
+    
+    // Execute stored procedure to get bill items data
+    const result = await pool.request()
+      .input('orderNo', sql.VarChar(50), orderNo)
+      .execute('sp_GetBillItems');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching bill items:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
 // Stock endpoints
-app.get('/api/stock/items', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return SPISA stock items once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/stock/items', async (req, res) => {
+  try {
+    // Get filter parameters
+    const yearsSoldIn = parseInt(req.query.yearsSoldIn) || 2;
+    const needsRestock = req.query.needsRestock === 'true';
+    const categoryIds = req.query.categoryIds ? req.query.categoryIds.split(',') : [];
+    const providerIds = req.query.providerIds ? req.query.providerIds.split(',') : [];
+    const countryNames = req.query.countryNames ? req.query.countryNames.split(',') : [];
+    
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get stock items
+    const request = pool.request()
+      .input('yearsSoldIn', sql.Int, yearsSoldIn)
+      .input('needsRestock', sql.Bit, needsRestock);
+    
+    // Add category filter if provided
+    if (categoryIds.length > 0) {
+      request.input('categoryIds', sql.VarChar(500), categoryIds.join(','));
+    }
+    
+    // Add provider filter if provided
+    if (providerIds.length > 0) {
+      request.input('providerIds', sql.VarChar(500), providerIds.join(','));
+    }
+    
+    // Add country filter if provided
+    if (countryNames.length > 0) {
+      request.input('countryNames', sql.VarChar(500), countryNames.join(','));
+    }
+    
+    const result = await request.execute('sp_GetStockItems');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching stock items:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/stock/value-by-category', (req, res) => {
+app.get('/api/stock/value-by-category', async (req, res) => {
   const yearsSoldIn = parseInt(req.query.yearsSoldIn) || 2;
-  res.json({ 
-    message: `This endpoint will return SPISA stock value by category for years sold in ${yearsSoldIn} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Execute stored procedure to get stock value by category
+    const result = await pool.request()
+      .input('yearsSoldIn', sql.Int, yearsSoldIn)
+      .execute('sp_GetStockValueByCategory');
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching stock value by category:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
 app.get('/api/stock/snapshots', (req, res) => {
