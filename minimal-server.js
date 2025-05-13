@@ -133,9 +133,17 @@ app.get('/api/accounts/balances', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Execute stored procedure to get balance data
+    // Execute query to get balance data (direct SQL instead of stored procedure)
     const result = await pool.request()
-      .execute('sp_GetBalances');
+      .query(`
+        SELECT 
+          name,
+          CONCAT('$', FORMAT(balance, '#,0.00')) AS balance,
+          CONCAT('$', FORMAT(due, '#,0.00')) AS due,
+          type
+        FROM Accounts
+        ORDER BY type, due DESC
+      `);
     
     res.json(result.recordset);
     
@@ -155,11 +163,26 @@ app.get('/api/accounts/future-payments', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Execute stored procedure to get future payments data
+    // Direct SQL query for future payments (30, 60, 90 days)
     const result = await pool.request()
-      .execute('sp_GetFuturePayments');
+      .query(`
+        SELECT
+          SUM(CASE WHEN DueDate <= DATEADD(DAY, 30, GETDATE()) THEN Amount ELSE 0 END) AS PaymentAmount30,
+          SUM(CASE WHEN DueDate BETWEEN DATEADD(DAY, 31, GETDATE()) AND DATEADD(DAY, 60, GETDATE()) THEN Amount ELSE 0 END) AS PaymentAmount60,
+          SUM(CASE WHEN DueDate BETWEEN DATEADD(DAY, 61, GETDATE()) AND DATEADD(DAY, 90, GETDATE()) THEN Amount ELSE 0 END) AS PaymentAmount90
+        FROM Payments
+        WHERE DueDate <= DATEADD(DAY, 90, GETDATE()) AND Paid = 0
+      `);
     
-    res.json(result.recordset);
+    // Format data into the expected structure
+    const data = result.recordset[0];
+    res.json({
+      PaymentAmount: [
+        data.PaymentAmount30 || 0,
+        data.PaymentAmount60 || 0,
+        data.PaymentAmount90 || 0
+      ]
+    });
     
     // Close the connection
     pool.close();
@@ -177,11 +200,15 @@ app.get('/api/accounts/due-balance', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Execute stored procedure to get due balance data
+    // Direct SQL query for due balance
     const result = await pool.request()
-      .execute('sp_GetDueBalance');
+      .query(`
+        SELECT SUM(due) AS Due
+        FROM Accounts
+        WHERE due > 0
+      `);
     
-    res.json(result.recordset);
+    res.json(result.recordset[0]);
     
     // Close the connection
     pool.close();
@@ -201,12 +228,25 @@ app.get('/api/invoices/spisa-billed', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Execute stored procedure to get billed amount data
-    const result = await pool.request()
-      .input('period', sql.VarChar(10), period)
-      .execute('sp_GetBilledAmount');
+    // Build date filter based on period
+    let dateFilter;
+    if (period === 'day') {
+      dateFilter = "WHERE CONVERT(date, InvoiceDate) = CONVERT(date, GETDATE())";
+    } else if (period === 'month') {
+      dateFilter = "WHERE MONTH(InvoiceDate) = MONTH(GETDATE()) AND YEAR(InvoiceDate) = YEAR(GETDATE())";
+    } else {
+      dateFilter = ""; // all time
+    }
     
-    res.json(result.recordset);
+    // Direct SQL query to get billed amount
+    const result = await pool.request()
+      .query(`
+        SELECT SUM(InvoiceAmount) AS InvoiceAmount
+        FROM Invoices
+        ${dateFilter}
+      `);
+    
+    res.json(result.recordset[0]);
     
     // Close the connection
     pool.close();
@@ -385,55 +425,197 @@ app.get('/api/stock/value-by-category', async (req, res) => {
   }
 });
 
-app.get('/api/stock/snapshots', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return SPISA stock snapshots once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/stock/snapshots', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get stock snapshots (using direct SQL instead of stored procedure)
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          CONVERT(VARCHAR(10), [Date], 120) AS Date, 
+          SUM(StockValue) AS StockValue 
+        FROM StockSnapshots
+        GROUP BY CONVERT(VARCHAR(10), [Date], 120)
+        ORDER BY Date
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching stock snapshots:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/stock/discontinued', (req, res) => {
+app.get('/api/stock/discontinued', async (req, res) => {
   const yearsNotSold = parseInt(req.query.yearsNotSold) || 10;
-  res.json({ 
-    message: `This endpoint will return SPISA discontinued stock for years not sold ${yearsNotSold} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get discontinued stock (using direct SQL instead of stored procedure)
+    const result = await pool.request()
+      .input('yearsNotSold', sql.Int, yearsNotSold)
+      .query(`
+        SELECT 
+          code,
+          description,
+          stock,
+          category,
+          CONVERT(VARCHAR(10), lastSale, 103) AS lastSale,
+          CONCAT('$', FORMAT(value, '#,0.00')) AS value
+        FROM Stock
+        WHERE DATEDIFF(YEAR, lastSale, GETDATE()) >= @yearsNotSold
+        ORDER BY value DESC
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching discontinued stock:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/stock/discontinued-grouped', (req, res) => {
+app.get('/api/stock/discontinued-grouped', async (req, res) => {
   const yearsNotSold = parseInt(req.query.yearsNotSold) || 10;
-  res.json({ 
-    message: `This endpoint will return SPISA discontinued stock grouped by category for years not sold ${yearsNotSold} once firewall access is granted`,
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get discontinued stock grouped by category (using direct SQL instead of stored procedure)
+    const result = await pool.request()
+      .input('yearsNotSold', sql.Int, yearsNotSold)
+      .query(`
+        SELECT 
+          category,
+          SUM(value) AS stock_value
+        FROM Stock
+        WHERE DATEDIFF(YEAR, lastSale, GETDATE()) >= @yearsNotSold
+        GROUP BY category
+        ORDER BY stock_value DESC
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching discontinued stock grouped:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
 // Filter options endpoints
-app.get('/api/filters/categories', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return stock categories once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/filters/categories', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get distinct categories
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          CAST(ROW_NUMBER() OVER (ORDER BY category) AS VARCHAR) AS id, 
+          category AS name
+        FROM (
+          SELECT DISTINCT category
+          FROM Stock
+          WHERE category IS NOT NULL AND category != ''
+        ) AS distinct_categories
+        ORDER BY name
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/filters/providers', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return stock providers once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/filters/providers', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get distinct providers
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          CAST(ROW_NUMBER() OVER (ORDER BY provider) AS VARCHAR) AS id, 
+          provider AS name
+        FROM (
+          SELECT DISTINCT provider
+          FROM Stock
+          WHERE provider IS NOT NULL AND provider != ''
+        ) AS distinct_providers
+        ORDER BY name
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching providers:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
-app.get('/api/filters/countries', (req, res) => {
-  res.json({ 
-    message: 'This endpoint will return stock countries once firewall access is granted',
-    status: 'pending_firewall_access',
-    ip: '34.74.143.228'
-  });
+app.get('/api/filters/countries', async (req, res) => {
+  try {
+    // Connect to SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Query to get distinct countries
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          CAST(ROW_NUMBER() OVER (ORDER BY country) AS VARCHAR) AS id, 
+          country AS name
+        FROM (
+          SELECT DISTINCT country
+          FROM Stock
+          WHERE country IS NOT NULL AND country != ''
+        ) AS distinct_countries
+        ORDER BY name
+      `);
+    
+    res.json(result.recordset);
+    
+    // Close the connection
+    pool.close();
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
 });
 
 // Root route - serve the HTML file
