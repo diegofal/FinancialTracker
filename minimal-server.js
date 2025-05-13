@@ -132,7 +132,7 @@ app.get('/api/accounts/balances', (req, res) => {
   res.json({ 
     message: 'This endpoint will return account balances from SPISA database once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -140,7 +140,7 @@ app.get('/api/accounts/future-payments', (req, res) => {
   res.json({ 
     message: 'This endpoint will return future payments data from SPISA database once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -148,7 +148,7 @@ app.get('/api/accounts/due-balance', (req, res) => {
   res.json({ 
     message: 'This endpoint will return due balance data from SPISA database once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -158,7 +158,7 @@ app.get('/api/invoices/spisa-billed', (req, res) => {
   res.json({ 
     message: `This endpoint will return SPISA billed amount for period ${period} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -167,7 +167,7 @@ app.get('/api/invoices/xerp-billed', (req, res) => {
   res.json({ 
     message: `This endpoint will return XERP billed amount for period ${period} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -175,7 +175,7 @@ app.get('/api/invoices/history', (req, res) => {
   res.json({ 
     message: 'This endpoint will return XERP bills history once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -184,7 +184,7 @@ app.get('/api/invoices/bills', (req, res) => {
   res.json({ 
     message: `This endpoint will return XERP bills for period ${period} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -193,7 +193,7 @@ app.get('/api/invoices/bill-items/:orderNo', (req, res) => {
   res.json({ 
     message: `This endpoint will return XERP bill items for order ${orderNo} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -202,7 +202,7 @@ app.get('/api/stock/items', (req, res) => {
   res.json({ 
     message: 'This endpoint will return SPISA stock items once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -211,7 +211,7 @@ app.get('/api/stock/value-by-category', (req, res) => {
   res.json({ 
     message: `This endpoint will return SPISA stock value by category for years sold in ${yearsSoldIn} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -219,7 +219,7 @@ app.get('/api/stock/snapshots', (req, res) => {
   res.json({ 
     message: 'This endpoint will return SPISA stock snapshots once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -228,7 +228,7 @@ app.get('/api/stock/discontinued', (req, res) => {
   res.json({ 
     message: `This endpoint will return SPISA discontinued stock for years not sold ${yearsNotSold} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -237,7 +237,7 @@ app.get('/api/stock/discontinued-grouped', (req, res) => {
   res.json({ 
     message: `This endpoint will return SPISA discontinued stock grouped by category for years not sold ${yearsNotSold} once firewall access is granted`,
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -246,7 +246,7 @@ app.get('/api/filters/categories', (req, res) => {
   res.json({ 
     message: 'This endpoint will return stock categories once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -254,7 +254,7 @@ app.get('/api/filters/providers', (req, res) => {
   res.json({ 
     message: 'This endpoint will return stock providers once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
@@ -262,7 +262,7 @@ app.get('/api/filters/countries', (req, res) => {
   res.json({ 
     message: 'This endpoint will return stock countries once firewall access is granted',
     status: 'pending_firewall_access',
-    ip: '34.23.58.208'
+    ip: '34.74.143.228'
   });
 });
 
