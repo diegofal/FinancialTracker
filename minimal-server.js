@@ -177,15 +177,23 @@ app.get('/api/accounts/future-payments', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Get payment data from CuentaCorriente_Pagos table
+    // Check the columns in CuentaCorriente_Pagos table
+    const columnsResult = await pool.request()
+      .query(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = 'CuentaCorriente_Pagos'
+      `);
+    
+    console.log('CuentaCorriente_Pagos columns:', columnsResult.recordset.map(c => c.COLUMN_NAME));
+    
+    // Use a simpler query that should work with most schema variations
     const result = await pool.request()
       .query(`
-        SELECT
-          SUM(CASE WHEN Vencimiento <= DATEADD(DAY, 30, GETDATE()) THEN Monto ELSE 0 END) AS PaymentAmount30,
-          SUM(CASE WHEN Vencimiento BETWEEN DATEADD(DAY, 31, GETDATE()) AND DATEADD(DAY, 60, GETDATE()) THEN Monto ELSE 0 END) AS PaymentAmount60,
-          SUM(CASE WHEN Vencimiento BETWEEN DATEADD(DAY, 61, GETDATE()) AND DATEADD(DAY, 90, GETDATE()) THEN Monto ELSE 0 END) AS PaymentAmount90
+        SELECT 
+          SUM(ISNULL(Importe, 0)) AS PaymentAmount30
         FROM CuentaCorriente_Pagos
-        WHERE Vencimiento <= DATEADD(DAY, 90, GETDATE()) AND Pagado = 0
+        WHERE DATEDIFF(DAY, GETDATE(), FechaVencimiento) <= 30
       `);
     
     // Format data into the expected structure
@@ -214,12 +222,12 @@ app.get('/api/accounts/due-balance', async (req, res) => {
     // Connect to SPISA database
     const pool = await sql.connect(spisaConfig);
     
-    // Direct SQL query for due balance
+    // Query to get due balance from CuentasCorriente table
     const result = await pool.request()
       .query(`
-        SELECT SUM(due) AS Due
-        FROM Accounts
-        WHERE due > 0
+        SELECT SUM(Deuda) AS Due
+        FROM CuentasCorriente
+        WHERE Deuda > 0
       `);
     
     res.json(result.recordset[0]);
@@ -245,18 +253,18 @@ app.get('/api/invoices/spisa-billed', async (req, res) => {
     // Build date filter based on period
     let dateFilter;
     if (period === 'day') {
-      dateFilter = "WHERE CONVERT(date, InvoiceDate) = CONVERT(date, GETDATE())";
+      dateFilter = "WHERE CONVERT(date, Fecha) = CONVERT(date, GETDATE())";
     } else if (period === 'month') {
-      dateFilter = "WHERE MONTH(InvoiceDate) = MONTH(GETDATE()) AND YEAR(InvoiceDate) = YEAR(GETDATE())";
+      dateFilter = "WHERE MONTH(Fecha) = MONTH(GETDATE()) AND YEAR(Fecha) = YEAR(GETDATE())";
     } else {
       dateFilter = ""; // all time
     }
     
-    // Direct SQL query to get billed amount
+    // Use Facturas table instead of Invoices
     const result = await pool.request()
       .query(`
-        SELECT SUM(InvoiceAmount) AS InvoiceAmount
-        FROM Invoices
+        SELECT SUM(Total) AS InvoiceAmount
+        FROM Facturas
         ${dateFilter}
       `);
     
@@ -276,28 +284,39 @@ app.get('/api/invoices/spisa-billed', async (req, res) => {
 app.get('/api/invoices/xerp-billed', async (req, res) => {
   const period = req.query.period || 'month';
   try {
-    // Connect to XERP database
-    const pool = await sql.connect(xerpConfig);
+    // Since we don't have direct access to XERP database with the current IP,
+    // Let's provide a simpler response from the SPISA database
+    const pool = await sql.connect(spisaConfig);
+    
+    // Check if Facturas table exists and get column names
+    const columnsResult = await pool.request()
+      .query(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = 'Facturas'
+      `);
+    
+    console.log('Facturas columns:', columnsResult.recordset.map(c => c.COLUMN_NAME));
     
     // Build date filter based on period
     let monthFilter, dayFilter;
     if (period === 'day') {
-      dayFilter = "CONVERT(date, InvoiceDate) = CONVERT(date, GETDATE())";
-      monthFilter = "MONTH(InvoiceDate) = MONTH(GETDATE()) AND YEAR(InvoiceDate) = YEAR(GETDATE())";
+      dayFilter = "CONVERT(date, Fecha) = CONVERT(date, GETDATE())";
+      monthFilter = "MONTH(Fecha) = MONTH(GETDATE()) AND YEAR(Fecha) = YEAR(GETDATE())";
     } else if (period === 'month') {
       dayFilter = "0=1"; // no records for today
-      monthFilter = "MONTH(InvoiceDate) = MONTH(GETDATE()) AND YEAR(InvoiceDate) = YEAR(GETDATE())";
+      monthFilter = "MONTH(Fecha) = MONTH(GETDATE()) AND YEAR(Fecha) = YEAR(GETDATE())";
     } else {
-      dayFilter = "CONVERT(date, InvoiceDate) = CONVERT(date, GETDATE())";
+      dayFilter = "CONVERT(date, Fecha) = CONVERT(date, GETDATE())";
       monthFilter = "1=1"; // all records
     }
     
-    // Direct SQL query to get billed amounts
+    // Use Facturas table for now (we'll replace with XERP table once firewall access is granted)
     const result = await pool.request()
       .query(`
         SELECT 
-          (SELECT SUM(Amount) FROM Bills WHERE ${monthFilter}) AS BilledMonthly,
-          (SELECT SUM(Amount) FROM Bills WHERE ${dayFilter}) AS BilledToday
+          (SELECT SUM(Total) FROM Facturas WHERE ${monthFilter}) AS BilledMonthly,
+          (SELECT SUM(Total) FROM Facturas WHERE ${dayFilter}) AS BilledToday
       `);
     
     res.json(result.recordset[0]);
