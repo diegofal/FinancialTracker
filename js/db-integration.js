@@ -125,7 +125,7 @@ async function fetchData(endpoint, area = 'general') {
       console.log(`Database connection error for ${endpoint}:`, data.message || 'Unknown error');
       
       // If the server returned an error message, include the IP
-      const currentIP = '35.229.86.58'; // Current IP that needs to be added to firewall
+      const currentIP = '35.229.96.170'; // Current IP that needs to be added to firewall
       
       // Mark this area as having loading errors
       markAreaAsError(area);

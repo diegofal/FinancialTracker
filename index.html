@@ -4,10 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Financial & Inventory Dashboard</title>
+  <!-- Primary Font Awesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Fallback Font Awesome if primary fails -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css" crossorigin="anonymous">
+  <!-- Scripts -->
   <script src="/js/api.js"></script>
   <script src="/js/db-integration.js"></script>
   <script src="/js/dashboard-init.js"></script>
+  <!-- Fallback for Font Awesome -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if Font Awesome is loaded
+      const span = document.createElement('span');
+      span.className = 'fa';
+      span.style.display = 'none';
+      document.body.insertBefore(span, document.body.firstChild);
+      
+      const isFontAwesomeLoaded = window.getComputedStyle(span).fontFamily.includes('FontAwesome');
+      document.body.removeChild(span);
+      
+      if (!isFontAwesomeLoaded) {
+        console.log('Font Awesome not loaded, adding fallback icons');
+        // Add embedded icon font as fallback
+        const style = document.createElement('style');
+        style.innerHTML = `
+          .fas.fa-chart-line:before { content: "📈"; }
+          .fas.fa-coins:before { content: "💰"; }
+          .fas.fa-circle-exclamation:before { content: "❗"; }
+          .fas.fa-arrow-down:before { content: "↓"; }
+          .fas.fa-wallet:before { content: "👛"; }
+          .fas.fa-check-circle:before { content: "✓"; }
+          .fas.fa-arrow-up:before { content: "↑"; }
+          .fas.fa-exclamation-circle:before { content: "⚠️"; }
+          .fas.fa-file-invoice-dollar:before { content: "📄"; }
+          .fas.fa-box:before { content: "📦"; }
+          .fas.fa-calendar:before { content: "📅"; }
+          .fas.fa-archive:before { content: "🗄️"; }
+          .fas.fa-exclamation-triangle:before { content: "⚠️"; }
+          .fas.fa-times:before { content: "✖"; }
+        `;
+        document.head.appendChild(style);
+      }
+    });
+  </script>
   <style>
     /* Global styles */
     :root {
@@ -920,7 +960,7 @@
         <i class="fas fa-exclamation-triangle" style="color: #d97706;"></i>
         <span>
           <strong>Database Connection Status:</strong> 
-          Waiting for Azure SQL firewall access. To enable database access, add the IP <strong>35.229.86.58</strong> to your Azure SQL firewall rules.
+          Waiting for Azure SQL firewall access. To enable database access, add the IP <strong>35.229.96.170</strong> to your Azure SQL firewall rules.
         </span>
       </div>
       <button id="close-banner" style="background: none; border: none; cursor: pointer; color: #92400e; font-size: 16px;">
