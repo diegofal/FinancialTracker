@@ -120,9 +120,12 @@ async function fetchData(endpoint, area = 'general') {
     const response = await fetch(endpoint);
     const data = await response.json();
     
-    // Check if the API indicates pending database access
-    if (data && data.status === 'pending_firewall_access') {
-      console.log(`Database connection not available (IP: ${data.ip}) for ${endpoint}`);
+    // Check if the API indicates an error
+    if (data && (data.error === true || data.status === 'pending_firewall_access')) {
+      console.log(`Database connection error for ${endpoint}:`, data.message || 'Unknown error');
+      
+      // If the server returned an error message, include the IP
+      const currentIP = '35.229.86.58'; // Current IP that needs to be added to firewall
       
       // Mark this area as having loading errors
       markAreaAsError(area);
@@ -131,8 +134,9 @@ async function fetchData(endpoint, area = 'general') {
       return { 
         error: true, 
         errorType: 'database_access',
-        message: `Database connection not available. Firewall access needed for IP: ${data.ip}`,
-        endpoint: endpoint
+        message: `Database connection not available. Add IP ${currentIP} to your Azure SQL firewall rules.`,
+        endpoint: endpoint,
+        ip: currentIP
       };
     }
     
@@ -462,11 +466,7 @@ async function getStockValueByCategory(yearsSoldIn = 2) {
     };
   }
   
-  return [
-    { category: "Bridas", stock_value: 1200000 },
-    { category: "Accesorios", stock_value: 750000 },
-    { category: "Otros", stock_value: 730000 }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
@@ -484,13 +484,7 @@ async function getStockSnapshotsData() {
     };
   }
   
-  return [
-    { Date: "2025-01-01", StockValue: 4200000 },
-    { Date: "2025-02-01", StockValue: 4350000 },
-    { Date: "2025-03-01", StockValue: 4100000 },
-    { Date: "2025-04-01", StockValue: 4250000 },
-    { Date: "2025-05-01", StockValue: 4450000 }
-  ];
+  return data; // Return the actual API response
 }
 
 /**
@@ -532,30 +526,8 @@ async function getFilterOptions(filterType) {
     };
   }
   
-  switch (filterType) {
-    case 'categories':
-      return [
-        { id: "1", name: "Bridas" },
-        { id: "2", name: "Accesorios" },
-        { id: "3", name: "Válvulas" },
-        { id: "4", name: "Espárragos" }
-      ];
-    case 'providers':
-      return [
-        { id: "1", name: "Proveedor 1" },
-        { id: "2", name: "Proveedor 2" },
-        { id: "3", name: "Proveedor 3" }
-      ];
-    case 'countries':
-      return [
-        { id: "1", name: "Argentina" },
-        { id: "2", name: "Brasil" },
-        { id: "3", name: "China" },
-        { id: "4", name: "Italia" }
-      ];
-    default:
-      return [];
-  }
+  // Return the actual API response
+  return data;
 }
 
 // Export API functions
